@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>India GIS Portal</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    #main {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #sidebar {
+      width: 320px;
+      background-color: #f4f4f4;
+      padding: 15px;
+      overflow-y: auto;
+      border-right: 1px solid #ccc;
+    }
+
+    #map {
+      flex: 1;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #1b4f72;
+    }
+
+    select, button {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .legend-box {
+      background-color: #fff;
+      border: 1px solid #ccc;
+      padding: 8px;
+      font-size: 14px;
+    }
+
+    .legend-item {
+      margin-bottom: 5px;
+    }
+
+    .legend-color {
+      width: 20px;
+      height: 12px;
+      display: inline-block;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="main">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <h2>India GIS Portal</h2>
+
+    <label for="state">Select State:</label>
+    <select id="state">
+      <option value="">-- Select State --</option>
+      <option>Andhra Pradesh</option>
+  <option>Arunachal Pradesh</option>
+  <option>Assam</option>
+  <option>Bihar</option>
+  <option>Chhattisgarh</option>
+  <option>Goa</option>
+  <option>Gujarat</option>
+  <option>Haryana</option>
+  <option>Himachal Pradesh</option>
+  <option>Jharkhand</option>
+  <option>Karnataka</option>
+  <option>Kerala</option>
+  <option>Madhya Pradesh</option>
+  <option>Maharashtra</option>
+  <option>Manipur</option>
+  <option>Meghalaya</option>
+  <option>Mizoram</option>
+  <option>Nagaland</option>
+  <option>Odisha</option>
+  <option>Punjab</option>
+  <option>Rajasthan</option>
+  <option>Sikkim</option>
+  <option>Tamil Nadu</option>
+  <option>Telangana</option>
+  <option>Tripura</option>
+  <option>Uttar Pradesh</option>
+  <option>Uttarakhand</option>
+  <option>West Bengal</option>
+
+  <!-- Union Territories -->
+  <option>Andaman and Nicobar Islands</option>
+  <option>Chandigarh</option>
+  <option>Dadra and Nagar Haveli and Daman and Diu</option>
+  <option>Delhi</option>
+  <option>Jammu and Kashmir</option>
+  <option>Ladakh</option>
+  <option>Lakshadweep</option>
+  <option>Puducherry</option>
+      <!-- Add more states as needed -->
+    </select>
+
+    <label for="district">Select District:</label>
+    <select id="district">
+      <option value="">-- Select District --</option>
+      <option>Ahmedabad</option>
+      <option>Bangalore</option>
+      <option>Pune</option>
+      <option>Chennai</option>
+      <!-- Add based on state selected (dynamic loading can be added later) -->
+    </select>
+
+    <div class="legend-box">
+      <strong>Crop Map Legend</strong>
+      <div class="legend-item"><span class="legend-color" style="background:red;"></span> Kharif Crop</div>
+      <div class="legend-item"><span class="legend-color" style="background:blue;"></span> Rabi Crop</div>
+      <div class="legend-item"><span class="legend-color" style="background:magenta;"></span> Zaid Crop</div>
+      <div class="legend-item"><span class="legend-color" style="background:yellow;"></span> Double Crop</div>
+      <div class="legend-item"><span class="legend-color" style="background:green;"></span> Triple Crop</div>
+    </div>
+
+    <hr>
+
+    <strong>Reference Map (Screenshot)</strong>
+    
+  </div>
+
+  <!-- Map -->
+  <div id="map"></div>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.geometryutil/0.10.0/leaflet.geometryutil.min.js"></script>
+
+<script>
+  // Initialize map
+  var map = L.map('map').setView([22.9734, 78.6569], 5);
+
+  // Base Layers
+  var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  });
+
+  var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles © Esri'
+  });
+
+  osm.addTo(map);
+
+  var baseMaps = {
+    "OpenStreetMap": osm,
+    "Satellite View": satellite
+  };
+
+  L.control.layers(baseMaps).addTo(map);
+
+  // Search Control
+  L.Control.geocoder({
+    defaultMarkGeocode: true,
+    placeholder: "Search a location...",
+    showResultIcons: true
+  }).addTo(map);
+
+  // Drawing tools
+  var drawnItems = new L.FeatureGroup();
+  map.addLayer(drawnItems);
+
+  var drawControl = new L.Control.Draw({
+    edit: { featureGroup: drawnItems },
+    draw: {
+      polygon: true,
+      polyline: true,
+      rectangle: false,
+      circle: false,
+      marker: true,
+      circlemarker: false
+    }
+  });
+  map.addControl(drawControl);
+
+  // Measurement logic
+  map.on(L.Draw.Event.CREATED, function (event) {
+    var layer = event.layer;
+    drawnItems.addLayer(layer);
+
+    if (layer instanceof L.Polyline || layer instanceof L.Polygon) {
+      var latlngs = layer.getLatLngs();
+      var totalDistance = 0;
+
+      if (layer instanceof L.Polygon) {
+        latlngs = latlngs[0];
+      }
+
+      for (var i = 1; i < latlngs.length; i++) {
+        totalDistance += latlngs[i - 1].distanceTo(latlngs[i]);
+      }
+
+      if (layer instanceof L.Polygon) {
+        var area = L.GeometryUtil.geodesicArea(latlngs);
+        alert("Area: " + (area / 1000000).toFixed(2) + " sq km");
+      } else {
+        alert("Length: " + (totalDistance / 1000).toFixed(2) + " km");
+      }
+    }
+  });
+</script>
+
+</body>
+</html>
